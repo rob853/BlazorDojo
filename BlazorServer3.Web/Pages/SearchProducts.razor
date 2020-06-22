@@ -1,0 +1,67 @@
+@page "/searchproducts"
+
+@using BlazorServer3.ClassLibrary
+@inject DataAccess.IProductCategoryData ProductCategoryData
+
+<style>
+    table.table tbody tr td img {
+        width: 100px;
+    }
+</style>
+<BlazorServer3.Web.Components.ShoppingBasket />
+<h1>Search Products</h1>
+
+<p>This component demonstrates performing a search against a database.</p>
+
+<input placeholder="Search Term" @bind="_searchTerm" />
+<button @onclick="Search">Search Products</button>
+
+@if (_productCategories == null)
+{
+    <p><em>No matching products ...</em></p>
+}
+else
+{
+    <p>Products matching @_searchTerm</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product Id</th>
+                <th>Name</th>
+                <th>Category Name</th>
+                <th>Price</th>
+                <th>Image</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var productCategory in _productCategories)
+            {
+                <tr>
+                    <td>@productCategory.ProductId</td>
+                    <td>@productCategory.Name</td>
+                    <td>@productCategory.CategoryName</td>
+                    <td>£@($"{productCategory.Price:0.00}")</td>
+                    <td><img src="@productCategory.ImageFilePath" alt="@productCategory.Name image" /></td>
+                    <td><button>Add to basket</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+#pragma warning disable 649
+    private string _searchTerm;
+#pragma warning restore 649
+
+    private ICollection<ProductCategory> _productCategories;
+
+    protected async Task Search()
+    {
+        if (!string.IsNullOrWhiteSpace(_searchTerm) && _searchTerm.Length >= 3)
+        {
+            _productCategories = await ProductCategoryData.SearchProductsAsync(_searchTerm);
+        }
+    }
+}

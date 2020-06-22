@@ -1,0 +1,75 @@
+@page "/products"
+
+@using BlazorServer3.ClassLibrary
+@inject BlazorServer3.DataAccess.IProductCategoryData ProductCategoryData
+@using Microsoft.AspNetCore.ProtectedBrowserStorage
+@inject ProtectedLocalStorage _protectedLocalStore
+@inject BlazorServer3.DataAccess.IShoppingBasketItemData _shoppingBasketItemData
+
+<style>
+    table.table tbody tr td img {
+        width: 100px;
+    }
+</style>
+<BlazorServer3.Web.Components.ShoppingBasket />
+<h1>Products</h1>
+
+<p>This component demonstrates fetching data from a database.</p>
+
+@if (_productCategories == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product Id</th>
+                <th>Name</th>
+                <th>Category Name</th>
+                <th>Price</th>
+                <th>Image</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var productCategory in _productCategories)
+            {
+            <tr>
+                <td>@productCategory.ProductId</td>
+                <td>@productCategory.Name</td>
+                <td>@productCategory.CategoryName</td>
+                <td>£@($"{productCategory.Price:0.00}")</td>
+                <td><img src="@productCategory.ImageFilePath" alt="@productCategory.Name image" /></td>
+                <td><button @onclick="@(e => AddToBasket(e, productCategory.ProductId))">Add to basket</button></td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private ICollection<ProductCategory> _productCategories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _productCategories = await ProductCategoryData.GetAllAsync();
+    }
+
+    protected async Task AddToBasket(MouseEventArgs e, int productId)
+    {
+        var shoppingBasketId = await _protectedLocalStore.GetAsync<Guid>("MyShoppingBasket");
+        if(shoppingBasketId != null)
+        {
+            var sbi = new ShoppingBasketItem
+            {
+                ProductId = productId,
+                Quantity = 1,
+                ShoppingBasketId = shoppingBasketId
+            };
+
+            await _shoppingBasketItemData.AddShoppingBasketItem(sbi);
+        }
+    }
+}

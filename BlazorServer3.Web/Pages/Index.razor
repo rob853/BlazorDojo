@@ -1,0 +1,32 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.ProtectedBrowserStorage
+@inject ProtectedLocalStorage _protectedLocalStore
+@inject BlazorServer3.DataAccess.IShoppingBasketData _shoppingBasketData
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+@code{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var shoppingBasketId = await _protectedLocalStore.GetAsync<string>("MyShoppingBasket");
+                if (string.IsNullOrWhiteSpace(shoppingBasketId))
+                {
+                    var shoppingBasketIdGuid = await _shoppingBasketData.AddShoppingBasket();
+                    shoppingBasketId = shoppingBasketIdGuid.ToString();
+                    await _protectedLocalStore.SetAsync("MyShoppingBasket", shoppingBasketId);
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+    }
+}
